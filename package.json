@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/Coltonb-boop/tinyapp/issues"
   },
-  "homepage": "https://github.com/Coltonb-boop/tinyapp#readme"
+  "homepage": "https://github.com/Coltonb-boop/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.1"
+  }
 }
