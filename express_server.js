@@ -9,6 +9,18 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+
+// Middleware
+app.use(express.urlencoded( {extended: true }));
+
+
+// Endpoints
+app.post('/urls', (req, res) => {
+  console.log(req.body);
+  res.send('ok');
+})
+
+
 app.get('/', (req, res) => {
   res.send('Hello!');
 });
