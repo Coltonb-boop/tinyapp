@@ -13,6 +13,8 @@ const urlDatabase = {
 };
 
 // Receives string of characters to make a random string from or uses a default
+// @strLength defines custom length of string
+// @characters defines custom string characters to potentially be in the string
 const generateRandomString = (strLength, characters) => {
   const defaultCharacters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   // if characters is null, else use defaultCharacters to generate string
