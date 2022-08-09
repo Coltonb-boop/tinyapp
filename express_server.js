@@ -9,6 +9,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+// Receives string of characters to make a random string from or uses a default
+const generateRandomString = (characters) => {
+  const defaultCharacters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  // if characters is null, use defaultCharacters to generate string
+  let using = characters ? characters : defaultCharacters;
+  let result = '';
+
+  for (let i = 0; i < 5; i++) {
+    result += using[Math.floor(Math.random() * using.length)];
+  }
+
+  return result;
+}
 
 // Middleware
 app.use(express.urlencoded( {extended: true }));
@@ -16,10 +29,10 @@ app.use(express.urlencoded( {extended: true }));
 
 // Endpoints
 app.post('/urls', (req, res) => {
-  console.log(req.body);
+  // console.log('from post /urls', req.body);
+  urlDatabase[generateRandomString()] = req.body.longURL;
   res.send('ok');
-})
-
+});
 
 app.get('/', (req, res) => {
   res.send('Hello!');
