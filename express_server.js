@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const PORT = 8080; // default port 8080
+const morgan = require('morgan');
 
 app.set('view engine', 'ejs');
 
@@ -21,39 +22,42 @@ const generateRandomString = (characters) => {
   }
 
   return result;
-}
+};
 
+//
 // Middleware
-app.use(express.urlencoded( {extended: true }));
+//
+app.use(express.urlencoded({extended: true}));
+app.use(morgan('dev'));
 
-
-// Endpoints
+//
+// Add
+//
 app.post('/urls', (req, res) => {
-  let newShort = generateRandomString()
+  let newShort = generateRandomString();
   urlDatabase[newShort] = req.body.longURL;
 
-  const templateVars = { id: newShort, longURL: req.body.longURL };
-
-  res.render('urls_show', templateVars);
+  res.redirect('/urls');
 });
 
 app.post('/urls/:id/delete', (req, res) => {
   const deleteId = req.params.id;
   delete urlDatabase[deleteId];
 
-  const templateVars = { urls: urlDatabase };
+  res.redirect('/urls');
+});
 
-  res.render('urls_index', templateVars);
+app.post('/urls/:id/update', (req, res) => {
+  let changeId = req.params.id;
+  urlDatabase[changeId] = req.body.longURL;
+
+  res.redirect(`/urls/${changeId}`);
 });
 
 app.get('/', (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render('urls_index', templateVars);
 });
-
-app.get('/hello', (req, res) => {
-  res.send('<html><body>Hello <b>World</b></body></html>\n');
-})
 
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
