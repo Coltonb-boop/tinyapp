@@ -30,8 +30,10 @@ app.use(express.urlencoded( {extended: true }));
 // Endpoints
 app.post('/urls', (req, res) => {
   // console.log('from post /urls', req.body);
-  urlDatabase[generateRandomString()] = req.body.longURL;
-  res.send('ok');
+  let newShort = generateRandomString()
+  urlDatabase[newShort] = req.body.longURL;
+  const templateVars = { id: newShort, longURL: req.body.longURL };
+  res.render('urls_show', templateVars);
 });
 
 app.get('/', (req, res) => {
