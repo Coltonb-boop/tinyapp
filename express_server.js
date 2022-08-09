@@ -32,6 +32,7 @@ const generateRandomString = (characters) => {
 
 app.use(express.urlencoded({extended: true}));
 app.use(morgan('dev'));
+app.use(cookieParser());
 
 //
 // Add
@@ -39,6 +40,12 @@ app.use(morgan('dev'));
 
 app.post('/login', (req, res) => {
   res.cookie('username', req.body.username);
+
+  res.redirect('/urls');
+});
+
+app.post('/logout', (req, res) => {
+  res.clearCookie('username');
 
   res.redirect('/urls');
 });
