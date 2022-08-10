@@ -203,12 +203,19 @@ app.get('/urls.json', (req, res) => {
 app.get('/urls', (req, res) => {
   let usersURLs = {};
   let message = '';
+  let user = req.cookies.user_id;
 
-  if (!req.cookies.user_id) {
+  if (!user) {
     message = 'You must be logged in to see your shortURLs';
   }
 
-  
+  if (user) {
+    for (let url in urlDatabase) {
+      if (urlDatabase[url].userID === user) {
+        usersURLs[url] = urlDatabase[url];
+      }
+    }
+  }
 
   const templateVars = {
     users,
