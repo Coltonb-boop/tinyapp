@@ -161,10 +161,15 @@ app.post('/urls', (req, res) => {
 
 // Endpoint for deleting a shortURL. Redirects to /urls
 app.post('/urls/:id/delete', (req, res) => {
+  if (!req.cookies.user_id || req.cookies.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
+    res.send('This is either not your shortURL or you haven\'t logged in.');
+    return;
+  }
+
   const deleteId = req.params.id;
 
-  if (urlDatabase[deleteId].userID !== req.cookies.user_id) { // check if this user owns the shortURL
-    res.send("You cannot delete a shortURL belonging to someone else");
+  if (!lDatabase[deleteId]) {
+    res.send('That shortURL doesn\' exist!');
     return;
   }
   
@@ -176,10 +181,15 @@ app.post('/urls/:id/delete', (req, res) => {
 // Endpoint for editting. Will update a longURL in the database using the shortURL.
 // Redirects to /urls/:shortURL
 app.post('/urls/:id/update', (req, res) => {
+  if (!req.cookies.user_id || req.cookies.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
+    res.send('This is either not your shortURL or you haven\'t logged in.');
+    return;
+  }
+
   let changeId = req.params.id;
 
-  if (urlDatabase[changeId].userID !== req.cookies.user_id) { // check if this user owns the shortURL
-    res.send("You cannot update a shortURL belonging to someone else");
+  if (!lDatabase[changeId]) {
+    res.send('That shortURL doesn\' exist!');
     return;
   }
   
