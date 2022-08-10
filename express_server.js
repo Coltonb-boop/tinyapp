@@ -12,6 +12,14 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+}
+
 // Receives string of characters to make a random string from or uses a default
 // @strLength defines custom length of string
 // @characters defines custom string characters to potentially be in the string
@@ -42,14 +50,6 @@ app.use(cookieParser());  // allows us access to req.cookies
 //
 // Add
 //
-// Endpoint for user registration
-app.post('/register', (req, res) => {
-  const templateVars = {
-    username: req.cookies['username'],
-  }
-
-  res.render('urls_register', templateVars);
-});
 
 // Endpoint for logging in. Stores username in a cookie and redirects to /urls
 app.post('/login', (req, res) => {
@@ -64,6 +64,19 @@ app.post('/logout', (req, res) => {
 
   res.redirect('/urls');
 });
+
+// Endpoint for users sending registration info
+app.post('/register', (req, res) => {
+  console.log(req.body); // { email: 'me@google.com', password: 'asdf' }
+  let id = generateRandomString();
+  let email = req.body.email;
+  let password = req.body.password;
+
+  users.id = { id, email, password };
+  console.log(users.id);
+
+  res.redirect('/urls'); // eventually /urls
+})
 
 // Endpoint for /urls
 // Will catch a user making a new shortURL, store it in our database, and
@@ -95,13 +108,22 @@ app.post('/urls/:id/update', (req, res) => {
 //
 // Read
 //
+
 // Endpoint for main landing page. Shows urls_index
 app.get('/', (req, res) => {
   const templateVars = {
     urls: urlDatabase,
     username: req.cookies['username']
   };
+
   res.render('urls_index', templateVars);
+});
+
+// Catches a user trying to use a shortURL to get to the longURL
+app.get('/u/:id', (req, res) => {
+  let longURL = urlDatabase[req.params.id];
+
+  res.redirect(longURL);
 });
 
 // Endpoint for developers to see the json database
@@ -115,6 +137,7 @@ app.get('/urls', (req, res) => {
     urls: urlDatabase,
     username: req.cookies['username']
   };
+
   res.render('urls_index', templateVars);
 });
 
@@ -125,13 +148,8 @@ app.get('/urls/new', (req, res) => {
     longURL: urlDatabase[req.params.id],
     username: req.cookies['username']
   };
-  res.render('urls_new', templateVars);
-});
 
-// Catches a user trying to use a shortURL to get to the longURL
-app.get('/u/:id', (req, res) => {
-  let longURL = urlDatabase[req.params.id];
-  res.redirect(longURL);
+  res.render('urls_new', templateVars);
 });
 
 // Endpoint for looking at a specific shortURL
@@ -141,7 +159,17 @@ app.get('/urls/:id', (req, res) => {
     longURL: urlDatabase[req.params.id],
     username: req.cookies['username']
   };
+
   res.render('urls_show', templateVars);
+});
+
+// Endpoint for user registration
+app.get('/register', (req, res) => {
+  const templateVars = {
+    username: req.cookies['username'],
+  }
+
+  res.render('urls_register', templateVars);
 });
 
 //
