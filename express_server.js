@@ -4,6 +4,7 @@ const PORT = 8080; // default port 8080
 
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const { response } = require('express');
 
 app.set('view engine', 'ejs');
 
@@ -17,7 +18,19 @@ const users = {
     id: "userRandomID",
     email: "user@example.com",
     password: "purple-monkey-dinosaur",
-  },
+  }
+}
+
+// Helper functions
+// user lookup, takes in email to search for and returns user from users object
+const getUserByEmail = (email) => {
+  for (let user in users) {
+    if (users[user].email === email) {
+      return user;
+    }
+  }
+
+  return null;
 }
 
 // Receives string of characters to make a random string from or uses a default
@@ -53,8 +66,21 @@ app.use(cookieParser());  // allows us access to req.cookies
 
 // Endpoint for logging in. Stores username in a cookie and redirects to /urls
 app.post('/login', (req, res) => {
-  res.cookie('username', req.body.username);
+  // res.cookie('username', req.body.username);
+  if (req.cookies.user_id) { // if someone is logged in already
+    res.redirect('/urls');
+    return;
+  }
+  
+  const { email, password } = req.body;
+  let userFromDatabase = getUserByEmail(email);
 
+  if (email !== userFromDatabase.email || password !== userFromDatabase.password) {
+    res.redirect('/login'); // reload page so user knows something happened
+    return;
+  }
+
+  res.cookie('user_id', userFromDatabase.id);
   res.redirect('/urls');
 });
 
@@ -65,8 +91,16 @@ app.post('/logout', (req, res) => {
   res.redirect('/urls');
 });
 
-// Endpoint for users sending registration info
+// Endpoint for users registering
 app.post('/register', (req, res) => {
+  if (!req.body.email || !req.body.password) {
+    res.status(400).send('Email or password invalid');
+  }
+  if (getUserByEmail(req.body.email)) {
+    res.status(400).send('Email already taken');
+  }
+  
+  
   let id = generateRandomString();
   let email = req.body.email;
   let password = req.body.password;
@@ -142,7 +176,7 @@ app.get('/urls', (req, res) => {
     urls: urlDatabase,
     userId: req.cookies['user_id']
   };
-  console.log(users);
+  
   res.render('urls_index', templateVars);
 });
 
@@ -170,6 +204,16 @@ app.get('/urls/:id', (req, res) => {
   res.render('urls_show', templateVars);
 });
 
+// Endpoint for user login
+app.get('/login', (req, res) => {
+  const templateVars = {
+    users,
+    userId: req.cookies['user_id']
+  }
+
+  res.render('urls_login', templateVars);
+});
+
 // Endpoint for user registration
 app.get('/register', (req, res) => {
   const templateVars = {
@@ -178,6 +222,11 @@ app.get('/register', (req, res) => {
   }
 
   res.render('urls_register', templateVars);
+});
+
+// Catchall
+app.get('*', (req, res) => {
+  response.status(404).send('This page doesn\'t exist');
 });
 
 //
