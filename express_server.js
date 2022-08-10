@@ -15,7 +15,7 @@ const urlDatabase = {
 
 const users = {
   aaaaa: {
-    id: "userRandomID",
+    id: "aaaaa",
     email: "user@example.com",
     password: "purple-monkey-dinosaur",
   }
@@ -26,7 +26,7 @@ const users = {
 const getUserByEmail = (email) => {
   for (let user in users) {
     if (users[user].email === email) {
-      return user;
+      return users[user];
     }
   }
 
@@ -74,6 +74,11 @@ app.post('/login', (req, res) => {
   
   const { email, password } = req.body;
   let userFromDatabase = getUserByEmail(email);
+
+  if (!userFromDatabase) {
+    res.redirect('/login'); // reload page so user knows something happened
+    return;
+  }
 
   if (email !== userFromDatabase.email || password !== userFromDatabase.password) {
     res.redirect('/login'); // reload page so user knows something happened

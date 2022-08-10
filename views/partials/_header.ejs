@@ -20,13 +20,8 @@
     </div>
 
     <% if (!users[userId]) { %>
-    <form method="post" action="/login">
-      <input 
-        name="email"
-        placeholder="email"
-      />
-      <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
+      <a class="nav-item nav-link" href="/login">Login</a>
+      <a class="nav-item nav-link" href="/Register">Register</a>
     <% } else { %>
       <h5>Logged in as: <%= users[userId].email %>&nbsp</h5>
     <form method="post" action="/logout">
