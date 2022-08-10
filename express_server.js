@@ -180,13 +180,7 @@ app.post('/urls/:id/update', (req, res) => {
 
 // Endpoint for main landing page. Shows urls_index
 app.get('/', (req, res) => {
-  const templateVars = {
-    users,
-    urls: urlDatabase,
-    userId: req.cookies['user_id']
-  };
-
-  res.render('urls_index', templateVars);
+  res.redirect('/urls');
 });
 
 // Catches a user trying to use a shortURL to get to the longURL
@@ -207,10 +201,20 @@ app.get('/urls.json', (req, res) => {
 
 // Endpoint for /urls. Simply loads the list of stored URLs
 app.get('/urls', (req, res) => {
+  let usersURLs = {};
+  let message = '';
+
+  if (!req.cookies.user_id) {
+    message = 'You must be logged in to see your shortURLs';
+  }
+
+  
+
   const templateVars = {
     users,
-    urls: urlDatabase,
-    userId: req.cookies['user_id']
+    message,
+    urls: usersURLs,
+    userId: req.cookies['user_id'],
   };
   
   res.render('urls_index', templateVars);
@@ -275,7 +279,7 @@ app.get('/register', (req, res) => {
   res.render('urls_register', templateVars);
 });
 
-// Catchall
+// Catch-all
 app.get('*', (req, res) => {
   response.status(404).send('This page doesn\'t exist');
 });
