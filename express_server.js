@@ -9,15 +9,21 @@ const { response } = require('express');
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  'b2xVn2': {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "aaaaaa"
+  },
+  '9sm5xK': {
+    longURL: "http://www.google.com",
+    userID: "aaaaaa"
+  }
 };
 
 const users = {
-  aaaaa: {
-    id: "aaaaa",
+  aaaaaa: {
+    id: "aaaaaa",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "purple",
   }
 }
 
@@ -41,7 +47,7 @@ const generateRandomString = (strLength, characters) => {
   // if characters is null, else use defaultCharacters to generate string
   let using = characters ? characters : defaultCharacters;
   // if length null, else use 5 as default
-  let length = strLength ? strLength : 5;
+  let length = strLength ? strLength : 6;
   let result = '';
 
   // find random value within defaultCharacters/characters and concat onto result
@@ -67,11 +73,6 @@ app.use(cookieParser());  // allows us access to req.cookies
 // Endpoint for logging in. Checks user credentials and stores 
 // user_id in a cookie and redirects to /urls
 app.post('/login', (req, res) => {
-  if (req.cookies.user_id) { // if someone is logged in already
-    res.redirect('/urls');
-    return;
-  }
-  
   const { email, password } = req.body;
   let userFromDatabase = getUserByEmail(email);
 
@@ -86,6 +87,7 @@ app.post('/login', (req, res) => {
   }
 
   res.cookie('user_id', userFromDatabase.id);
+
   res.redirect('/urls');
 });
 
@@ -126,8 +128,19 @@ app.post('/logout', (req, res) => {
 // Will catch a user making a new shortURL, store it in our database, and
 // redirect to /urls
 app.post('/urls', (req, res) => {
-  let newShort = generateRandomString();
-  urlDatabase[newShort] = req.body.longURL;
+  if (!req.cookies.user_id) { // if not logged in
+    res.send("You must login to create shortURLs");
+    return;
+  }
+  
+  const newShort = generateRandomString();
+  const longURL = req.body.longURL;
+  const userID = req.cookies.user_id;
+  const newDatabaseObj = {
+    longURL,
+    userID
+  }
+  urlDatabase[newShort] = newDatabaseObj;
 
   res.redirect('/urls');
 });
@@ -135,6 +148,12 @@ app.post('/urls', (req, res) => {
 // Endpoint for deleting a shortURL. Redirects to /urls
 app.post('/urls/:id/delete', (req, res) => {
   const deleteId = req.params.id;
+
+  if (urlDatabase[deleteId].userID !== req.cookies.user_id) { // check if this user owns the shortURL
+    res.send("You cannot delete a shortURL belonging to someone else");
+    return;
+  }
+  
   delete urlDatabase[deleteId];
 
   res.redirect('/urls');
@@ -144,7 +163,13 @@ app.post('/urls/:id/delete', (req, res) => {
 // Redirects to /urls/:shortURL
 app.post('/urls/:id/update', (req, res) => {
   let changeId = req.params.id;
-  urlDatabase[changeId] = req.body.longURL;
+
+  if (urlDatabase[changeId].userID !== req.cookies.user_id) { // check if this user owns the shortURL
+    res.send("You cannot update a shortURL belonging to someone else");
+    return;
+  }
+  
+  urlDatabase[changeId].longURL = req.body.longURL;
 
   res.redirect(`/urls/${changeId}`);
 });
@@ -166,7 +191,11 @@ app.get('/', (req, res) => {
 
 // Catches a user trying to use a shortURL to get to the longURL
 app.get('/u/:id', (req, res) => {
-  let longURL = urlDatabase[req.params.id];
+  let longURL = urlDatabase[req.params.id].longURL;
+
+  if (!longURL) { // check longURL exists
+    res.send("That shortURL doesn't exist");
+  }
 
   res.redirect(longURL);
 });
@@ -189,10 +218,15 @@ app.get('/urls', (req, res) => {
 
 // Endpoint for the create new shortURL page
 app.get('/urls/new', (req, res) => {
+  if (!req.cookies.user_id) { // if not logged in
+    res.redirect('/login');
+    return;
+  }
+  
   const templateVars = {
     users,
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    longURL: urlDatabase[req.params.id].longURL,
     userId: req.cookies['user_id']
   };
 
@@ -204,7 +238,7 @@ app.get('/urls/:id', (req, res) => {
   const templateVars = {
     users,
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    longURL: urlDatabase[req.params.id].longURL,
     userId: req.cookies['user_id']
   };
 
@@ -213,6 +247,11 @@ app.get('/urls/:id', (req, res) => {
 
 // Endpoint for user login
 app.get('/login', (req, res) => {
+  if (req.cookies.user_id) { // if someone is logged in already
+    res.redirect('/urls');
+    return;
+  }
+  
   const templateVars = {
     users,
     userId: req.cookies['user_id']
@@ -223,6 +262,11 @@ app.get('/login', (req, res) => {
 
 // Endpoint for user registration
 app.get('/register', (req, res) => {
+  if (req.cookies.user_id) { // if someone is logged in already
+    res.redirect('/urls');
+    return;
+  }
+  
   const templateVars = {
     users,
     userId: req.cookies['user_id']
