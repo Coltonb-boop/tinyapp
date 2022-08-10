@@ -64,9 +64,9 @@ app.use(cookieParser());  // allows us access to req.cookies
 // Add
 //
 
-// Endpoint for logging in. Stores username in a cookie and redirects to /urls
+// Endpoint for logging in. Checks user credentials and stores 
+// user_id in a cookie and redirects to /urls
 app.post('/login', (req, res) => {
-  // res.cookie('username', req.body.username);
   if (req.cookies.user_id) { // if someone is logged in already
     res.redirect('/urls');
     return;
@@ -76,12 +76,12 @@ app.post('/login', (req, res) => {
   let userFromDatabase = getUserByEmail(email);
 
   if (!userFromDatabase) {
-    res.redirect('/login'); // reload page so user knows something happened
+    res.status(403).send('Couldn\'nt find a user with that email');
     return;
   }
 
   if (email !== userFromDatabase.email || password !== userFromDatabase.password) {
-    res.redirect('/login'); // reload page so user knows something happened
+    res.status(403).send("Incorrect email or password");
     return;
   }
 
@@ -100,9 +100,11 @@ app.post('/logout', (req, res) => {
 app.post('/register', (req, res) => {
   if (!req.body.email || !req.body.password) {
     res.status(400).send('Email or password invalid');
+    return;
   }
   if (getUserByEmail(req.body.email)) {
     res.status(400).send('Email already taken');
+    return;
   }
   
   
