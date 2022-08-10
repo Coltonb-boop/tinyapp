@@ -42,6 +42,15 @@ app.use(cookieParser());  // allows us access to req.cookies
 //
 // Add
 //
+// Endpoint for user registration
+app.post('/register', (req, res) => {
+  const templateVars = {
+    username: req.cookies['username'],
+  }
+
+  res.render('urls_register', templateVars);
+});
+
 // Endpoint for logging in. Stores username in a cookie and redirects to /urls
 app.post('/login', (req, res) => {
   res.cookie('username', req.body.username);
