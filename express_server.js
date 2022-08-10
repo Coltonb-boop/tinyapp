@@ -13,7 +13,7 @@ const urlDatabase = {
 };
 
 const users = {
-  userRandomID: {
+  aaaaa: {
     id: "userRandomID",
     email: "user@example.com",
     password: "purple-monkey-dinosaur",
@@ -60,20 +60,23 @@ app.post('/login', (req, res) => {
 
 // Endpoint for logging out. Currently deletes user cookie and redirects to /urls
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
 
   res.redirect('/urls');
 });
 
 // Endpoint for users sending registration info
 app.post('/register', (req, res) => {
-  console.log(req.body); // { email: 'me@google.com', password: 'asdf' }
   let id = generateRandomString();
   let email = req.body.email;
   let password = req.body.password;
 
-  users.id = { id, email, password };
-  console.log(users.id);
+  users[id] = { 
+    id, 
+    email, 
+    password 
+  };
+  res.cookie('user_id', id);
 
   res.redirect('/urls'); // eventually /urls
 })
@@ -112,8 +115,9 @@ app.post('/urls/:id/update', (req, res) => {
 // Endpoint for main landing page. Shows urls_index
 app.get('/', (req, res) => {
   const templateVars = {
+    users,
     urls: urlDatabase,
-    username: req.cookies['username']
+    userId: req.cookies['user_id']
   };
 
   res.render('urls_index', templateVars);
@@ -134,19 +138,21 @@ app.get('/urls.json', (req, res) => {
 // Endpoint for /urls. Simply loads the list of stored URLs
 app.get('/urls', (req, res) => {
   const templateVars = {
+    users,
     urls: urlDatabase,
-    username: req.cookies['username']
+    userId: req.cookies['user_id']
   };
-
+  console.log(users);
   res.render('urls_index', templateVars);
 });
 
 // Endpoint for the create new shortURL page
 app.get('/urls/new', (req, res) => {
   const templateVars = {
+    users,
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username: req.cookies['username']
+    userId: req.cookies['user_id']
   };
 
   res.render('urls_new', templateVars);
@@ -155,9 +161,10 @@ app.get('/urls/new', (req, res) => {
 // Endpoint for looking at a specific shortURL
 app.get('/urls/:id', (req, res) => {
   const templateVars = {
+    users,
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username: req.cookies['username']
+    userId: req.cookies['user_id']
   };
 
   res.render('urls_show', templateVars);
@@ -166,7 +173,8 @@ app.get('/urls/:id', (req, res) => {
 // Endpoint for user registration
 app.get('/register', (req, res) => {
   const templateVars = {
-    username: req.cookies['username'],
+    users,
+    userId: req.cookies['user_id']
   }
 
   res.render('urls_register', templateVars);

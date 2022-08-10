@@ -19,7 +19,7 @@
       </div>
     </div>
 
-    <% if (!username) { %>
+    <% if (!users[userId]) { %>
     <form method="post" action="/login">
       <input 
         name="username"
@@ -28,7 +28,7 @@
       <button type="submit" class="btn btn-primary">Submit</button>
     </form>
     <% } else { %>
-      <h5>Logged in as: <%= username %>&nbsp</h5>
+      <h5>Logged in as: <%= users[userId].email %>&nbsp</h5>
     <form method="post" action="/logout">
       <button type="submit" class="btn btn-primary">Logout</button>
     </form>
