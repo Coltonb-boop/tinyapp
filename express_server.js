@@ -27,7 +27,9 @@ const users = {
   }
 }
 
+//
 // Helper functions
+//
 // user lookup, takes in email to search for and returns user from users object
 const getUserByEmail = (email) => {
   for (let user in users) {
@@ -37,6 +39,18 @@ const getUserByEmail = (email) => {
   }
 
   return null;
+}
+
+const urlsForUser = (user) => {
+  let urls = {};
+  // find this users shortURLs 
+  for (let url in urlDatabase) {
+    if (urlDatabase[url].userID === user) {
+      urls[url] = urlDatabase[url];
+    }
+  }
+
+  return urls;
 }
 
 // Receives string of characters to make a random string from or uses a default
@@ -201,20 +215,18 @@ app.get('/urls.json', (req, res) => {
 
 // Endpoint for /urls. Simply loads the list of stored URLs
 app.get('/urls', (req, res) => {
-  let usersURLs = {};
   let message = '';
   let user = req.cookies.user_id;
-
+  
   if (!user) {
     message = 'You must be logged in to see your shortURLs';
   }
+  
+  let usersURLs = urlsForUser(user);
 
-  if (user) {
-    for (let url in urlDatabase) {
-      if (urlDatabase[url].userID === user) {
-        usersURLs[url] = urlDatabase[url];
-      }
-    }
+  // if no shortURLs found for this user, set our message to something helpful
+  if (!usersURLs) {
+    message = 'You must have no shortURLs! You can create shortURLs using the "Create New URL" tab.';
   }
 
   const templateVars = {
@@ -246,6 +258,11 @@ app.get('/urls/new', (req, res) => {
 
 // Endpoint for looking at a specific shortURL
 app.get('/urls/:id', (req, res) => {
+  if (!req.cookies.user_id || req.cookies.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
+    res.send('This is either not your shortURL or you haven\'t logged in.');
+    return;
+  }
+
   const templateVars = {
     users,
     id: req.params.id,
