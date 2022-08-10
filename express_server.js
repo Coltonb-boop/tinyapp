@@ -89,13 +89,6 @@ app.post('/login', (req, res) => {
   res.redirect('/urls');
 });
 
-// Endpoint for logging out. Currently deletes user cookie and redirects to /urls
-app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
-
-  res.redirect('/urls');
-});
-
 // Endpoint for users registering
 app.post('/register', (req, res) => {
   if (!req.body.email || !req.body.password) {
@@ -121,6 +114,13 @@ app.post('/register', (req, res) => {
 
   res.redirect('/urls'); // eventually /urls
 })
+
+// Endpoint for logging out. Currently deletes user cookie and redirects to /urls
+app.post('/logout', (req, res) => {
+  res.clearCookie('user_id');
+
+  res.redirect('/urls');
+});
 
 // Endpoint for /urls
 // Will catch a user making a new shortURL, store it in our database, and
