@@ -84,6 +84,51 @@ app.use(cookieParser());  // allows us access to req.cookies
 // Add
 //
 
+// Endpoint for logging in. Checks user credentials and stores 
+// user_id in a cookie and redirects to /urls
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  let userFromDatabase = getUserByEmail(email);
+
+  if (!userFromDatabase) {
+    res.status(403).send('Couldn\'t find a user with that email');
+    return;
+  }
+
+  if (password !== userFromDatabase.password) {
+    res.status(403).send("Incorrect password");
+    return;
+  }
+
+  res.cookie('user_id', userFromDatabase.id);
+
+  res.redirect('/urls');
+});
+
+// Endpoint for users registering
+app.post('/register', (req, res) => {
+  if (!req.body.email || !req.body.password) {
+    res.status(400).send('Email or password invalid');
+    return;
+  }
+  if (getUserByEmail(req.body.email)) {
+    res.status(400).send('Email already taken');
+    return;
+  }
+  
+  let id = generateRandomString();
+  let email = req.body.email;
+  let password = req.body.password;
+
+  users[id] = { 
+    id, 
+    email, 
+    password 
+  };
+  res.cookie('user_id', id);
+
+  res.redirect('/urls'); // eventually /urls
+})
 
 // Endpoint for logging out. Currently deletes user cookie and redirects to /urls
 app.post('/logout', (req, res) => {
@@ -253,27 +298,6 @@ app.get('/login', (req, res) => {
   res.render('urls_login', templateVars);
 });
 
-// Endpoint for logging in. Checks user credentials and stores 
-// user_id in a cookie and redirects to /urls
-app.post('/login', (req, res) => {
-  const { email, password } = req.body;
-  let userFromDatabase = getUserByEmail(email);
-
-  if (!userFromDatabase) {
-    res.status(403).send('Couldn\'t find a user with that email');
-    return;
-  }
-
-  if (password !== userFromDatabase.password) {
-    res.status(403).send("Incorrect password");
-    return;
-  }
-
-  res.cookie('user_id', userFromDatabase.id);
-
-  res.redirect('/urls');
-});
-
 // Endpoint for user registration
 app.get('/register', (req, res) => {
   if (req.cookies.user_id) { // if someone is logged in already
@@ -288,31 +312,6 @@ app.get('/register', (req, res) => {
 
   res.render('urls_register', templateVars);
 });
-
-// Endpoint for users registering
-app.post('/register', (req, res) => {
-  if (!req.body.email || !req.body.password) {
-    res.status(400).send('Email or password invalid');
-    return;
-  }
-  if (getUserByEmail(req.body.email)) {
-    res.status(400).send('Email already taken');
-    return;
-  }
-  
-  let id = generateRandomString();
-  let email = req.body.email;
-  let password = req.body.password;
-
-  users[id] = { 
-    id, 
-    email, 
-    password 
-  };
-  res.cookie('user_id', id);
-
-  res.redirect('/urls'); // eventually /urls
-})
 
 // Catch-all
 app.get('*', (req, res) => {
