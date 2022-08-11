@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 
 const morgan = require('morgan');
 const cookieSession = require('cookie-session');
+const methodOverride = require('method-override');
 
 app.set('view engine', 'ejs');
 
@@ -39,6 +40,7 @@ app.use(cookieSession({   // allows us access to req.session
   name: 'session',
   keys: ['bestKey']
 }));
+app.use(methodOverride('_method'));
 //
 // Add
 //
@@ -128,7 +130,7 @@ app.post('/urls', (req, res) => {
 /**
  * Endpoint for deleting a shortURL. Redirects to /urls
  */
-app.post('/urls/:id/delete', (req, res) => {
+app.delete('/urls/:id', (req, res) => {
   if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
     res.send('This is either not your shortURL or you haven\'t logged in.');
     return;
@@ -150,7 +152,7 @@ app.post('/urls/:id/delete', (req, res) => {
  * Endpoint for editting. Will update a longURL in the database using the shortURL.
  * Redirects to /urls/:shortURL
  */
-app.post('/urls/:id/update', (req, res) => {
+app.put('/urls/:id', (req, res) => {
   if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
     res.send('This is either not your shortURL or you haven\'t logged in.');
     return;
