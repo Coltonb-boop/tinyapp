@@ -8,12 +8,12 @@ const testUsers = {
     email: "user@example.com",
     password: "purple",
   }
-}
+};
 
 describe('getUserByEmail', () => {
   it('should return a user with a valid email', () => {
     const user = getUserByEmail('user@example.com', testUsers);
-    const expectedUserId ='aaaaaa';
+    const expectedUserId = 'aaaaaa';
     assert.equal(user.id, expectedUserId);
   });
 
@@ -22,4 +22,4 @@ describe('getUserByEmail', () => {
     const expectedUserId = null;
     assert.equal(user, expectedUserId);
   });
-})
+});

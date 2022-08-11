@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const PORT = 8080; // default port 8080
 
-const { getUserByEmail } = require('./helpers');
+const { getUserByEmail, urlsForUser } = require('./helpers');
 const bcrypt = require('bcryptjs');
 
 const morgan = require('morgan');
@@ -27,23 +27,7 @@ const users = {
     email: "user@example.com",
     password: "purple",
   }
-}
-
-//
-// Helper functions
-//
-
-const urlsForUser = (user) => {
-  let urls = {};
-  // find this users shortURLs 
-  for (let url in urlDatabase) {
-    if (urlDatabase[url].userID === user) {
-      urls[url] = urlDatabase[url];
-    }
-  }
-
-  return urls;
-}
+};
 
 // Receives string of characters to make a random string from or uses a default
 // @strLength defines custom length of string
@@ -79,7 +63,7 @@ app.use(cookieSession({
 // Add
 //
 
-// Endpoint for logging in. Checks user credentials and stores 
+// Endpoint for logging in. Checks user credentials and stores
 // user_id in a cookie and redirects to /urls
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
@@ -95,7 +79,7 @@ app.post('/login', (req, res) => {
     return;
   }
 
-  req.session.user_id= userFromDatabase.id;
+  req.session.user_id = userFromDatabase.id;
 
   res.redirect('/urls');
 });
@@ -116,15 +100,15 @@ app.post('/register', (req, res) => {
   let password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
 
-  users[id] = { 
-    id, 
-    email, 
+  users[id] = {
+    id,
+    email,
     password: hashedPassword
   };
   req.session.user_id = id;
 
   res.redirect('/urls'); // eventually /urls
-})
+});
 
 // Endpoint for logging out. Currently deletes user cookie and redirects to /urls
 app.post('/logout', (req, res) => {
@@ -148,7 +132,7 @@ app.post('/urls', (req, res) => {
   const newDatabaseObj = {
     longURL,
     userID
-  }
+  };
   urlDatabase[newShort] = newDatabaseObj;
 
   res.redirect('/urls');
@@ -163,7 +147,7 @@ app.post('/urls/:id/delete', (req, res) => {
 
   const deleteId = req.params.id;
 
-  if (!lDatabase[deleteId]) {
+  if (!urlDatabase[deleteId]) {
     res.send('That shortURL doesn\' exist!');
     return;
   }
@@ -183,7 +167,7 @@ app.post('/urls/:id/update', (req, res) => {
 
   let changeId = req.params.id;
 
-  if (!lDatabase[changeId]) {
+  if (!urlDatabase[changeId]) {
     res.send('That shortURL doesn\' exist!');
     return;
   }
@@ -227,7 +211,7 @@ app.get('/urls', (req, res) => {
     message = 'You must be logged in to see your shortURLs';
   }
   
-  let usersURLs = urlsForUser(user);
+  let usersURLs = urlsForUser(user, urlDatabase);
 
   // if no shortURLs found for this user, set our message to something helpful
   if (user && Object.keys(usersURLs).length === 0) {
@@ -302,7 +286,7 @@ app.get('/register', (req, res) => {
   const templateVars = {
     users,
     userId: req.session['user_id']
-  }
+  };
 
   res.render('urls_register', templateVars);
 });
