@@ -57,12 +57,16 @@ app.post('/login', (req, res) => {
   let userFromDatabase = getUserByEmail(email, users);
 
   if (!userFromDatabase) {
-    res.status(403).send('Couldn\'t find a user with that email');
+    req.session.message = 'Couldn\'t find a user with that email';
+    res.redirect('/login');
+    // res.status(403).send('Couldn\'t find a user with that email');
     return;
   }
   
   if (!bcrypt.compareSync(password, userFromDatabase.password)) {
-    res.status(403).send("Incorrect password");
+    req.session.message = 'Incorrect password';
+    res.redirect('/login');
+    // res.status(403).send("Incorrect password");
     return;
   }
 
@@ -76,11 +80,15 @@ app.post('/login', (req, res) => {
  */
 app.post('/register', (req, res) => {
   if (!req.body.email || !req.body.password) {
-    res.status(400).send('Email or password invalid');
+    req.session.message = 'Email or password invalid';
+    res.redirect('/register');
+    // res.status(400).send('Email or password invalid');
     return;
   }
   if (getUserByEmail(req.body.email, users)) {
-    res.status(400).send('Email already taken');
+    req.session.message = 'Email already taken';
+    res.redirect('/register');
+    // res.status(400).send('Email already taken');
     return;
   }
   
@@ -286,10 +294,15 @@ app.get('/login', (req, res) => {
     return;
   }
   
+  let message = req.session.message ? req.session.message : '';
+  
   const templateVars = {
     users,
+    message,
     userId: req.session['user_id'] // can remove because redundant with users: users[req.session['user_id']],
   };
+
+  req.session.message = ''; // remove the cookie after it's used
 
   res.render('urls_login', templateVars);
 });
@@ -303,10 +316,15 @@ app.get('/register', (req, res) => {
     return;
   }
   
+  let message = req.session.message ? req.session.message : '';
+  
   const templateVars = {
     users,
+    message,
     userId: req.session['user_id']
   };
+
+  req.session.message = ''; // remove the cookie after it's used
 
   res.render('urls_register', templateVars);
 });
