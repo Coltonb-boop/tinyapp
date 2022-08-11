@@ -235,7 +235,6 @@ app.get('/urls', (req, res) => {
 
   // if no shortURLs found for this user, set our message to something helpful
   if (user && Object.keys(usersURLs).length === 0) {
-    // return res.send('<html><body><p>Possible error message</p></body></html>')
     message = 'You must have no shortURLs! You can create shortURLs using the "Create New URL" tab.';
   }
 
