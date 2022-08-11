@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const PORT = 8080; // default port 8080
 
-const { getUserByEmail, urlsForUser } = require('./helpers');
+const { getUserByEmail, urlsForUser, generateRandomString } = require('./helpers');
 const bcrypt = require('bcryptjs');
 
 const morgan = require('morgan');
@@ -29,42 +29,24 @@ const users = {
   }
 };
 
-// Receives string of characters to make a random string from or uses a default
-// @strLength defines custom length of string
-// @characters defines custom string characters to potentially be in the string
-const generateRandomString = (strLength, characters) => {
-  const defaultCharacters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  // if characters is null, else use defaultCharacters to generate string
-  let using = characters ? characters : defaultCharacters;
-  // if length null, else use 5 as default
-  let length = strLength ? strLength : 6;
-  let result = '';
-
-  // find random value within defaultCharacters/characters and concat onto result
-  for (let i = 0; i < length; i++) {
-    result += using[Math.floor(Math.random() * using.length)];
-  }
-
-  return result;
-};
-
 //
 // Middleware
 //
 
 app.use(express.urlencoded({extended: true}));
 app.use(morgan('dev'));   // logs server events for us
-app.use(cookieSession({
+app.use(cookieSession({   // allows us access to req.session
   name: 'session',
-  keys: ['cheese']
-}));  // allows us access to req.session
-
+  keys: ['bestKey']
+}));
 //
 // Add
 //
 
-// Endpoint for logging in. Checks user credentials and stores
-// user_id in a cookie and redirects to /urls
+/**
+ * Endpoint for logging in. Checks user credentials and stores
+ * user_id in a cookie and redirects to /urls
+ */
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
   let userFromDatabase = getUserByEmail(email, users);
@@ -84,7 +66,9 @@ app.post('/login', (req, res) => {
   res.redirect('/urls');
 });
 
-// Endpoint for users registering
+/**
+ * Endpoint for users registering
+ */
 app.post('/register', (req, res) => {
   if (!req.body.email || !req.body.password) {
     res.status(400).send('Email or password invalid');
@@ -110,16 +94,19 @@ app.post('/register', (req, res) => {
   res.redirect('/urls'); // eventually /urls
 });
 
-// Endpoint for logging out. Currently deletes user cookie and redirects to /urls
+/**
+ * Endpoint for logging out. Currently deletes user cookie and redirects to /urls
+ */
 app.post('/logout', (req, res) => {
   req.session = null;
 
   res.redirect('/urls');
 });
 
-// Endpoint for /urls
-// Will catch a user making a new shortURL, store it in our database, and
-// redirect to /urls
+/**
+ * Endpoint for /urls. Will catch a user making a new shortURL, store it in
+ * our database, and redirect to /urls
+ */
 app.post('/urls', (req, res) => {
   if (!req.session.user_id) { // if not logged in
     res.send("You must login to create shortURLs");
@@ -138,7 +125,9 @@ app.post('/urls', (req, res) => {
   res.redirect(`/urls/${newShort}`);
 });
 
-// Endpoint for deleting a shortURL. Redirects to /urls
+/**
+ * Endpoint for deleting a shortURL. Redirects to /urls
+ */
 app.post('/urls/:id/delete', (req, res) => {
   if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
     res.send('This is either not your shortURL or you haven\'t logged in.');
@@ -157,8 +146,10 @@ app.post('/urls/:id/delete', (req, res) => {
   res.redirect('/urls');
 });
 
-// Endpoint for editting. Will update a longURL in the database using the shortURL.
-// Redirects to /urls/:shortURL
+/**
+ * Endpoint for editting. Will update a longURL in the database using the shortURL.
+ * Redirects to /urls/:shortURL
+ */
 app.post('/urls/:id/update', (req, res) => {
   if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
     res.send('This is either not your shortURL or you haven\'t logged in.');
@@ -181,7 +172,9 @@ app.post('/urls/:id/update', (req, res) => {
 // Read
 //
 
-// Endpoint for main landing page. Shows urls_index
+/**
+ * Endpoint for main landing page. Shows urls_index
+ */
 app.get('/', (req, res) => {
   if (req.session.user_id) {
     res.redirect('/urls');
@@ -190,7 +183,9 @@ app.get('/', (req, res) => {
   res.redirect('/login');
 });
 
-// Catches a user trying to use a shortURL to get to the longURL
+/**
+ * Catches a user trying to use a shortURL to get to the longURL
+ */
 app.get('/u/:id', (req, res) => {
   if (!urlDatabase[req.params.id]) { // check longURL exists
     res.send("That shortURL doesn't exist");
@@ -202,12 +197,16 @@ app.get('/u/:id', (req, res) => {
   res.redirect(longURL);
 });
 
-// Endpoint for developers to see the json database
+/**
+ * Endpoint for developers to see the json database
+ */
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
 });
 
-// Endpoint for /urls. Simply loads the list of stored URLs
+/**
+ * Endpoint for /urls. Simply loads the list of stored URLs
+ */
 app.get('/urls', (req, res) => {
   let message = '';
   let user = req.session.user_id;
@@ -233,7 +232,9 @@ app.get('/urls', (req, res) => {
   res.render('urls_index', templateVars);
 });
 
-// Endpoint for the create new shortURL page
+/**
+ * Endpoint for the create new shortURL page
+ */
 app.get('/urls/new', (req, res) => {
   if (!req.session.user_id) { // if not logged in
     res.redirect('/login');
@@ -249,7 +250,9 @@ app.get('/urls/new', (req, res) => {
   res.render('urls_new', templateVars);
 });
 
-// Endpoint for looking at a specific shortURL
+/**
+ * Endpoint for looking at a specific shortURL
+ */
 app.get('/urls/:id', (req, res) => {
   if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
     res.send('This is either not your shortURL or you haven\'t logged in.');
@@ -266,7 +269,9 @@ app.get('/urls/:id', (req, res) => {
   res.render('urls_show', templateVars);
 });
 
-// Endpoint for user login
+/**
+ * Endpoint for user login
+ */
 app.get('/login', (req, res) => {
   if (req.session.user_id) { // if someone is logged in already
     res.redirect('/urls');
@@ -281,7 +286,9 @@ app.get('/login', (req, res) => {
   res.render('urls_login', templateVars);
 });
 
-// Endpoint for user registration
+/**
+ * Endpoint for user registration
+ */
 app.get('/register', (req, res) => {
   if (req.session.user_id) { // if someone is logged in already
     res.redirect('/urls');
@@ -296,15 +303,16 @@ app.get('/register', (req, res) => {
   res.render('urls_register', templateVars);
 });
 
-// Catch-all
+/**
+ * Catch-all random routes and throw a 404
+ */
 app.get('*', (req, res) => {
   res.status(404).send('This page doesn\'t exist');
 });
 
-//
-//
-//
-
+/**
+ * Start the listener
+ */
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });

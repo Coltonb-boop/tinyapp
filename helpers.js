@@ -35,9 +35,32 @@ const urlsForUser = (user, database) => {
   return urls;
 };
 
+/**
+ * Receives string of characters to make a random string from or uses a default
+ * @param {*} strLength custom length of string
+ * @param {*} characters custom string characters, otherwise uses default
+ * @returns 
+ */
+const generateRandomString = (strLength, characters) => {
+  const defaultCharacters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  // if characters is null, else use defaultCharacters to generate string
+  let using = characters ? characters : defaultCharacters;
+  // if length null, else use 5 as default
+  let length = strLength ? strLength : 6;
+  let result = '';
+
+  // find random value within defaultCharacters/characters and concat onto result
+  for (let i = 0; i < length; i++) {
+    result += using[Math.floor(Math.random() * using.length)];
+  }
+
+  return result;
+};
+
 
 
 module.exports = {
   getUserByEmail,
   urlsForUser,
+  generateRandomString
 };
