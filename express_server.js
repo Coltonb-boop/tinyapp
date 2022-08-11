@@ -258,7 +258,6 @@ app.get('/urls/new', (req, res) => {
   const templateVars = {
     users,
     id: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL,
     userId: req.cookies['user_id']
   };
 
@@ -314,7 +313,7 @@ app.get('/register', (req, res) => {
 
 // Catch-all
 app.get('*', (req, res) => {
-  response.status(404).send('This page doesn\'t exist');
+  res.status(404).send('This page doesn\'t exist');
 });
 
 //
