@@ -79,7 +79,7 @@ app.post('/login', (req, res) => {
     return;
   }
 
-  req.session.user_id = userFromDatabase.id;
+  req.session["user_id"] = userFromDatabase.id;
 
   res.redirect('/urls');
 });
@@ -105,7 +105,7 @@ app.post('/register', (req, res) => {
     email,
     password: hashedPassword
   };
-  req.session.user_id = id;
+  req.session['user_id'] = id;
 
   res.redirect('/urls'); // eventually /urls
 });
@@ -135,7 +135,7 @@ app.post('/urls', (req, res) => {
   };
   urlDatabase[newShort] = newDatabaseObj;
 
-  res.redirect('/urls');
+  res.redirect(`/urls/${newShort}`);
 });
 
 // Endpoint for deleting a shortURL. Redirects to /urls
@@ -183,16 +183,21 @@ app.post('/urls/:id/update', (req, res) => {
 
 // Endpoint for main landing page. Shows urls_index
 app.get('/', (req, res) => {
-  res.redirect('/urls');
+  if (req.session.user_id) {
+    res.redirect('/urls');
+    return;
+  }
+  res.redirect('/login');
 });
 
 // Catches a user trying to use a shortURL to get to the longURL
 app.get('/u/:id', (req, res) => {
-  let longURL = urlDatabase[req.params.id].longURL;
-
-  if (!longURL) { // check longURL exists
+  if (!urlDatabase[req.params.id]) { // check longURL exists
     res.send("That shortURL doesn't exist");
+    return;
   }
+
+  let longURL = urlDatabase[req.params.id].longURL;
 
   res.redirect(longURL);
 });
