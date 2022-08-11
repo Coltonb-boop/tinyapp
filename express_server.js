@@ -2,11 +2,11 @@ const express = require('express');
 const app = express();
 const PORT = 8080; // default port 8080
 
+const { getUserByEmail } = require('./helpers');
 const bcrypt = require('bcryptjs');
 
 const morgan = require('morgan');
-const cookieParser = require('cookie-parser');
-const { response } = require('express');
+const cookieSession = require('cookie-session');
 
 app.set('view engine', 'ejs');
 
@@ -32,16 +32,6 @@ const users = {
 //
 // Helper functions
 //
-// user lookup, takes in email to search for and returns user from users object
-const getUserByEmail = (email) => {
-  for (let user in users) {
-    if (users[user].email === email) {
-      return users[user];
-    }
-  }
-
-  return null;
-}
 
 const urlsForUser = (user) => {
   let urls = {};
@@ -80,7 +70,10 @@ const generateRandomString = (strLength, characters) => {
 
 app.use(express.urlencoded({extended: true}));
 app.use(morgan('dev'));   // logs server events for us
-app.use(cookieParser());  // allows us access to req.cookies
+app.use(cookieSession({
+  name: 'session',
+  keys: ['cheese']
+}));  // allows us access to req.session
 
 //
 // Add
@@ -90,7 +83,7 @@ app.use(cookieParser());  // allows us access to req.cookies
 // user_id in a cookie and redirects to /urls
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
-  let userFromDatabase = getUserByEmail(email);
+  let userFromDatabase = getUserByEmail(email, users);
 
   if (!userFromDatabase) {
     res.status(403).send('Couldn\'t find a user with that email');
@@ -102,7 +95,7 @@ app.post('/login', (req, res) => {
     return;
   }
 
-  res.cookie('user_id', userFromDatabase.id);
+  req.session.user_id= userFromDatabase.id;
 
   res.redirect('/urls');
 });
@@ -113,7 +106,7 @@ app.post('/register', (req, res) => {
     res.status(400).send('Email or password invalid');
     return;
   }
-  if (getUserByEmail(req.body.email)) {
+  if (getUserByEmail(req.body.email, users)) {
     res.status(400).send('Email already taken');
     return;
   }
@@ -128,14 +121,14 @@ app.post('/register', (req, res) => {
     email, 
     password: hashedPassword
   };
-  res.cookie('user_id', id);
+  req.session.user_id = id;
 
   res.redirect('/urls'); // eventually /urls
 })
 
 // Endpoint for logging out. Currently deletes user cookie and redirects to /urls
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
 
   res.redirect('/urls');
 });
@@ -144,14 +137,14 @@ app.post('/logout', (req, res) => {
 // Will catch a user making a new shortURL, store it in our database, and
 // redirect to /urls
 app.post('/urls', (req, res) => {
-  if (!req.cookies.user_id) { // if not logged in
+  if (!req.session.user_id) { // if not logged in
     res.send("You must login to create shortURLs");
     return;
   }
   
   const newShort = generateRandomString();
   const longURL = req.body.longURL;
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const newDatabaseObj = {
     longURL,
     userID
@@ -163,7 +156,7 @@ app.post('/urls', (req, res) => {
 
 // Endpoint for deleting a shortURL. Redirects to /urls
 app.post('/urls/:id/delete', (req, res) => {
-  if (!req.cookies.user_id || req.cookies.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
+  if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
     res.send('This is either not your shortURL or you haven\'t logged in.');
     return;
   }
@@ -183,7 +176,7 @@ app.post('/urls/:id/delete', (req, res) => {
 // Endpoint for editting. Will update a longURL in the database using the shortURL.
 // Redirects to /urls/:shortURL
 app.post('/urls/:id/update', (req, res) => {
-  if (!req.cookies.user_id || req.cookies.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
+  if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
     res.send('This is either not your shortURL or you haven\'t logged in.');
     return;
   }
@@ -228,7 +221,7 @@ app.get('/urls.json', (req, res) => {
 // Endpoint for /urls. Simply loads the list of stored URLs
 app.get('/urls', (req, res) => {
   let message = '';
-  let user = req.cookies.user_id;
+  let user = req.session.user_id;
   
   if (!user) {
     message = 'You must be logged in to see your shortURLs';
@@ -245,7 +238,7 @@ app.get('/urls', (req, res) => {
     users,
     message,
     urls: usersURLs,
-    userId: req.cookies['user_id'],
+    userId: req.session['user_id'],
   };
   
   res.render('urls_index', templateVars);
@@ -253,7 +246,7 @@ app.get('/urls', (req, res) => {
 
 // Endpoint for the create new shortURL page
 app.get('/urls/new', (req, res) => {
-  if (!req.cookies.user_id) { // if not logged in
+  if (!req.session.user_id) { // if not logged in
     res.redirect('/login');
     return;
   }
@@ -261,7 +254,7 @@ app.get('/urls/new', (req, res) => {
   const templateVars = {
     users,
     id: req.params.id,
-    userId: req.cookies['user_id']
+    userId: req.session['user_id']
   };
 
   res.render('urls_new', templateVars);
@@ -269,7 +262,7 @@ app.get('/urls/new', (req, res) => {
 
 // Endpoint for looking at a specific shortURL
 app.get('/urls/:id', (req, res) => {
-  if (!req.cookies.user_id || req.cookies.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
+  if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
     res.send('This is either not your shortURL or you haven\'t logged in.');
     return;
   }
@@ -278,7 +271,7 @@ app.get('/urls/:id', (req, res) => {
     users,
     id: req.params.id,
     longURL: urlDatabase[req.params.id].longURL,
-    userId: req.cookies['user_id']
+    userId: req.session['user_id']
   };
 
   res.render('urls_show', templateVars);
@@ -286,14 +279,14 @@ app.get('/urls/:id', (req, res) => {
 
 // Endpoint for user login
 app.get('/login', (req, res) => {
-  if (req.cookies.user_id) { // if someone is logged in already
+  if (req.session.user_id) { // if someone is logged in already
     res.redirect('/urls');
     return;
   }
   
   const templateVars = {
     users,
-    userId: req.cookies['user_id'] // can remove because redundant with users: users[req.cookies['user_id']],
+    userId: req.session['user_id'] // can remove because redundant with users: users[req.session['user_id']],
   };
 
   res.render('urls_login', templateVars);
@@ -301,14 +294,14 @@ app.get('/login', (req, res) => {
 
 // Endpoint for user registration
 app.get('/register', (req, res) => {
-  if (req.cookies.user_id) { // if someone is logged in already
+  if (req.session.user_id) { // if someone is logged in already
     res.redirect('/urls');
     return;
   }
   
   const templateVars = {
     users,
-    userId: req.cookies['user_id']
+    userId: req.session['user_id']
   }
 
   res.render('urls_register', templateVars);
