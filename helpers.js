@@ -39,7 +39,7 @@ const urlsForUser = (user, database) => {
  * Receives string of characters to make a random string from or uses a default
  * @param {*} strLength custom length of string
  * @param {*} characters custom string characters, otherwise uses default
- * @returns 
+ * @returns string of random characters
  */
 const generateRandomString = (strLength, characters) => {
   const defaultCharacters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';

@@ -14,11 +14,13 @@ app.set('view engine', 'ejs');
 const urlDatabase = {
   'b2xVn2': {
     longURL: "http://www.lighthouselabs.ca",
-    userID: "aaaaaa"
+    userID: "aaaaaa",
+    visits: 0
   },
   '9sm5xK': {
     longURL: "http://www.google.com",
-    userID: "aaaaaa"
+    userID: "aaaaaa",
+    visits: 0
   }
 };
 
@@ -41,6 +43,7 @@ app.use(cookieSession({   // allows us access to req.session
   keys: ['bestKey']
 }));
 app.use(methodOverride('_method'));
+
 //
 // Add
 //
@@ -120,32 +123,12 @@ app.post('/urls', (req, res) => {
   const userID = req.session.user_id;
   const newDatabaseObj = {
     longURL,
-    userID
+    userID,
+    visits: 0
   };
   urlDatabase[newShort] = newDatabaseObj;
 
   res.redirect(`/urls/${newShort}`);
-});
-
-/**
- * Endpoint for deleting a shortURL. Redirects to /urls
- */
-app.delete('/urls/:id', (req, res) => {
-  if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
-    res.send('This is either not your shortURL or you haven\'t logged in.');
-    return;
-  }
-
-  const deleteId = req.params.id;
-
-  if (!urlDatabase[deleteId]) {
-    res.send('That shortURL doesn\' exist!');
-    return;
-  }
-  
-  delete urlDatabase[deleteId];
-
-  res.redirect('/urls');
 });
 
 /**
@@ -168,6 +151,27 @@ app.put('/urls/:id', (req, res) => {
   urlDatabase[changeId].longURL = req.body.longURL;
 
   res.redirect(`/urls/${changeId}`);
+});
+
+/**
+ * Endpoint for deleting a shortURL. Redirects to /urls
+ */
+app.delete('/urls/:id', (req, res) => {
+  if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
+    res.send('This is either not your shortURL or you haven\'t logged in.');
+    return;
+  }
+
+  const deleteId = req.params.id;
+
+  if (!urlDatabase[deleteId]) {
+    res.send('That shortURL doesn\' exist!');
+    return;
+  }
+  
+  delete urlDatabase[deleteId];
+
+  res.redirect('/urls');
 });
 
 //
@@ -195,6 +199,7 @@ app.get('/u/:id', (req, res) => {
   }
 
   let longURL = urlDatabase[req.params.id].longURL;
+  urlDatabase[req.params.id].visits++;
 
   res.redirect(longURL);
 });
@@ -264,8 +269,9 @@ app.get('/urls/:id', (req, res) => {
   const templateVars = {
     users,
     id: req.params.id,
+    userId: req.session['user_id'],
     longURL: urlDatabase[req.params.id].longURL,
-    userId: req.session['user_id']
+    visits: urlDatabase[req.params.id].visits,
   };
 
   res.render('urls_show', templateVars);
