@@ -36,6 +36,18 @@ const urlsForUser = (user, database) => {
 };
 
 /**
+ * Check for http:// and adds it if not there
+ * @param {*} url 
+ * @returns 
+ */
+const checkForHTTP = (url) => {
+  if (!url.includes('http://') && !url.includes('https://')) {
+    return 'http://' + url;
+  }
+  return url;
+}
+
+/**
  * Receives string of characters to make a random string from or uses a default
  * @param {*} strLength custom length of string
  * @param {*} characters custom string characters, otherwise uses default
@@ -62,5 +74,6 @@ const generateRandomString = (strLength, characters) => {
 module.exports = {
   getUserByEmail,
   urlsForUser,
-  generateRandomString
+  generateRandomString,
+  checkForHTTP
 };

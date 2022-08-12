@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const PORT = 8080; // default port 8080
 
-const { getUserByEmail, urlsForUser, generateRandomString } = require('./helpers');
+const { getUserByEmail, urlsForUser, generateRandomString, checkForHTTP } = require('./helpers');
 const bcrypt = require('bcryptjs');
 
 const morgan = require('morgan');
@@ -123,7 +123,7 @@ app.post('/urls', (req, res) => {
   }
   
   const newShort = generateRandomString();
-  const longURL = req.body.longURL;
+  const longURL = checkForHTTP(req.body.longURL);
   const userID = req.session.user_id;
   const newDatabaseObj = {
     longURL,
