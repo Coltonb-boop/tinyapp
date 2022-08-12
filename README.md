@@ -23,4 +23,4 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 #### Known issues
 
-- Must manually put in http:// for each url. Without it the shortURL won't work.
+- The website will try adding http:// when it's not there, but it's not very smart yet.
