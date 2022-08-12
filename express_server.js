@@ -59,14 +59,12 @@ app.post('/login', (req, res) => {
   if (!userFromDatabase) {
     req.session.message = 'Couldn\'t find a user with that email';
     res.redirect('/login');
-    // res.status(403).send('Couldn\'t find a user with that email');
     return;
   }
   
   if (!bcrypt.compareSync(password, userFromDatabase.password)) {
     req.session.message = 'Incorrect password';
     res.redirect('/login');
-    // res.status(403).send("Incorrect password");
     return;
   }
 
@@ -80,15 +78,13 @@ app.post('/login', (req, res) => {
  */
 app.post('/register', (req, res) => {
   if (!req.body.email || !req.body.password) {
-    req.session.message = 'Email or password invalid';
+    req.session.message = 'You need to fill out an email and password';
     res.redirect('/register');
-    // res.status(400).send('Email or password invalid');
     return;
   }
   if (getUserByEmail(req.body.email, users)) {
     req.session.message = 'Email already taken';
     res.redirect('/register');
-    // res.status(400).send('Email already taken');
     return;
   }
   
@@ -144,7 +140,8 @@ app.post('/urls', (req, res) => {
  * Redirects to /urls/:shortURL
  */
 app.put('/urls/:id', (req, res) => {
-  if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].userID) { // if not logged in
+  // if not logged in
+  if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].userID) { 
     res.send('This is either not your shortURL or you haven\'t logged in.');
     return;
   }
